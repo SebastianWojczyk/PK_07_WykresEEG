@@ -12,7 +12,13 @@ namespace PK_07_WykresEEG
 {
     public partial class UserControlWave : UserControl
     {
+        public delegate void WaveAction(UserControlWave sender);
+        public event WaveAction WaveChanged;
 
+        public bool WaveVisible
+        {
+            get => checkBoxVisible.Checked;
+        }
         public string WaveName
         {
             get => groupBoxWave.Text;
@@ -41,6 +47,15 @@ namespace PK_07_WykresEEG
         {
             return Convert.ToDouble(numericUpDownAmplitude.Value) *
                    Math.Sin(Convert.ToDouble(numericUpDownFrequency.Value) * x);
+        }
+
+        private void waveParameter_Changed(object sender, EventArgs e)
+        {
+            /*if (WaveChanged != null)
+            {
+                WaveChanged(this);
+            }*/
+            WaveChanged?.Invoke(this);
         }
     }
 }

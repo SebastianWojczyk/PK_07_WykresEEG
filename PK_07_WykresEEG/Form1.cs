@@ -23,28 +23,69 @@ namespace PK_07_WykresEEG
             flowLayoutPanelConfig.Controls.Add(new UserControlWave("SMR", 16, 4, Color.Magenta));
             flowLayoutPanelConfig.Controls.Add(new UserControlWave("Beta", 18, 3, Color.Orange));
             flowLayoutPanelConfig.Controls.Add(new UserControlWave("Beta 2", 35, 7, Color.Brown));
-        }
 
-        private void button1_Click(object sender, EventArgs e)
-        {
-            chartWaves.Series.Clear();
             foreach (Object o in flowLayoutPanelConfig.Controls)
             {
                 if (o is UserControlWave)
                 {
                     UserControlWave wave = o as UserControlWave;
-
-                    Series s = new Series();
-                    s.Name = wave.WaveName;
-                    s.Color = wave.WaveColor;
-                    s.ChartType = SeriesChartType.Line;
-                    for (double x = 0; x < 10; x += 0.03)
-                    {
-                        s.Points.AddXY(x, wave.GetY(x));
-                    }
-                    chartWaves.Series.Add(s);
+                    wave.WaveChanged += W_WaveChanged;
+                    W_WaveChanged(wave);
                 }
             }
+        }
+
+        private void W_WaveChanged(UserControlWave sender)
+        {
+            Series s;
+            s = chartWaves.Series.SingleOrDefault(x => x.Name == sender.WaveName);
+
+            //pierwszy raz
+            if (s == null)
+            {
+                s = new Series();
+                s.Name = sender.WaveName;
+                s.Color = sender.WaveColor;
+                s.ChartType = SeriesChartType.Line;
+                chartWaves.Series.Add(s);
+            }
+            else
+            {
+                s.Points.Clear();
+            }
+            if (sender.WaveVisible)
+            {
+                for (double x = 0; x < 10; x += 0.02)
+                {
+                    s.Points.AddXY(x, sender.GetY(x));
+                }
+            }
+
+            chartWaves.Series.Remove(chartWaves.Series.SingleOrDefault(x => x.Name == "EEG"));
+
+            Series sum = new Series();
+            sum.Name = "EEG";
+            sum.Color = Color.Black;
+            sum.BorderWidth = 5;
+            sum.ChartType = SeriesChartType.Line;
+
+            for (double x = 0; x < 10; x += 0.02)
+            {
+                double ySum = 0;
+                //foreach(UserControlWave wave in flowLayoutPanelConfig.Controls)
+                foreach (Series tmp in chartWaves.Series)
+                {
+                    //if (wave.WaveVisible)
+                    if (tmp.Points.Count > 0)
+                    {
+                        ySum += tmp.Points.Single(p => p.XValue == x).YValues[0];
+                        //ySum += wave.GetY(x);
+                    }
+                }
+                sum.Points.AddXY(x, ySum);
+            }
+
+            chartWaves.Series.Add(sum);
         }
     }
 }
